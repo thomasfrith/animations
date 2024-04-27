@@ -1,0 +1,106 @@
+<h>Double Pendulum</h>
+<p>This is the double pendulum</p>
+
+<canvas id="pendulumcan"></canvas>
+
+<script>
+
+// canvas width and height
+
+var width = 1200;
+var height = 500;
+
+// increase the size of the pendulum
+
+var canvas_factor_h = 6;
+var canvas_factor_w = 24;
+
+// time increment
+var dt = 0.1;
+var t = 0;
+
+// pendulum variables
+var theta_1 = Math.PI/2;
+var theta_2 = Math.PI/2;
+
+var p_1 = 0;
+var p_2 = 0;
+
+var m = 1;
+var l = 100;
+var g = 9.81;
+
+var x_history = new Array();
+var y_history = new Array();
+
+var animation = window.requestAnimationFrame;
+
+function drawPendulum(){
+var c = document.getElementById("pendulumcan");
+var ctx = c.getContext("2d");
+
+c.height = height;
+c.width = width;
+
+ctx.clearRect(0,0,width,height);
+
+var theta_1_dot = (6/(m*Math.pow(l,2)))*(2*p_1-3*p_2*Math.cos(theta_1-theta_2))/(16-9*Math.pow(Math.cos(theta_1-theta_2),2));
+var theta_2_dot = (6/(m*Math.pow(l,2)))*(8*p_2-3*p_1*Math.cos(theta_1-theta_2))/(16-9*Math.pow(Math.cos(theta_1-theta_2),2));
+
+var theta_1_new = theta_1 + dt*theta_1_dot;
+var theta_2_new = theta_2 + dt*theta_2_dot;
+
+var p_1_dot = (-0.5*m*Math.pow(l,2))*(theta_1_dot*theta_2_dot*Math.sin(theta_1-theta_2)+3*(g/l)*Math.sin(theta_1));
+var p_2_dot = (-0.5*m*Math.pow(l,2))*(-theta_1_dot*theta_2_dot*Math.sin(theta_1-theta_2)+(g/l)*Math.sin(theta_2));
+
+var p_1_new = p_1 + dt*p_1_dot;
+var p_2_new = p_2 + dt*p_2_dot;
+
+theta_1 = theta_1_new;
+theta_2 = theta_2_new;
+
+p_1 = p_1_new;
+p_2 = p_2_new;
+
+ctx.lineWidth = 3;
+
+ctx.beginPath();
+ctx.moveTo(width/2,height/2);
+ctx.lineTo(width/2+l*Math.sin(theta_1),height/2+l*Math.cos(theta_1));
+ctx.moveTo(width/2+l*Math.sin(theta_1),height/2+l*Math.cos(theta_1));
+ctx.lineTo(width/2+l*Math.sin(theta_1)+l*Math.sin(theta_2),height/2+l*Math.cos(theta_1)+l*Math.cos(theta_2));
+ctx.arc(width/2+l*Math.sin(theta_1)+l*Math.sin(theta_2),height/2+l*Math.cos(theta_1)+l*Math.cos(theta_2),3,0,2*Math.PI);
+ctx.stroke();
+
+x_history.push(width/2+l*Math.sin(theta_1)+l*Math.sin(theta_2));
+y_history.push(height/2+l*Math.cos(theta_1)+l*Math.cos(theta_2));
+
+ctx.lineWidth = 1;
+
+ctx.beginPath();
+for(let k=1; k<x_history.length; k++){
+ctx.moveTo(x_history[k-1],y_history[k-1]);
+ctx.lineTo(x_history[k],y_history[k])
+}
+ctx.stroke();
+
+
+t = t + dt;
+
+
+if(t>100){
+
+x_history.shift();
+y_history.shift();
+
+
+}
+
+
+requestAnimationFrame(drawPendulum);
+
+}
+
+drawPendulum();
+
+</script>

@@ -1,0 +1,181 @@
+<h>Billards</h>
+<p>Thank you for playing billiards</p>
+<p id="energy"></p>
+<canvas id="billcan"></canvas>
+
+<script>
+// canvas width and height
+
+var width = 1200;
+var height = 500;
+
+var c = document.getElementById("billcan");
+var ctx = c.getContext("2d");
+
+c.height = height;
+c.width = width;
+
+function resetVariables(){
+
+// time increment
+dt = 0.1;
+t = 0;
+
+num_balls = 20;
+ball_size = 15;
+
+x = new Array(num_balls);
+y = new Array(num_balls);
+
+x_dot = new Array(num_balls);
+y_dot = new Array(num_balls);
+
+x_history = new Array(num_balls);
+y_history = new Array(num_balls);
+
+collision = new Array(num_balls);
+
+for(let i=0; i<num_balls; i++){
+
+x[i] = width*(Math.random()-0.5);
+y[i] = height*(Math.random()-0.5);
+
+x_dot[i] = 50*Math.random();
+y_dot[i] = 50*Math.random();
+
+x_history[i] = new Array();
+y_history[i] = new Array();
+
+collision[i] = new Array(num_balls).fill(0);
+}
+
+
+}
+
+function reDraw(){
+
+resetVariables();
+
+var animation = window.requestAnimationFrame;
+
+function drawBilliards(){
+
+ctx.clearRect(0,0,width,height);
+
+var E = 0;
+
+for(let i=0;i<num_balls;i++){
+
+for(let j=i+1;j<num_balls;j++){
+
+if(collision[i][j]==0 && Math.sqrt(Math.pow(x[i]-x[j],2)+Math.pow(y[i]-y[j],2))<=2*ball_size){
+
+collision[i][j]=1;
+
+collision_angle = Math.atan2((y[j]-y[i]),(x[j]-x[i]));
+
+var x_temp_i = x_dot[i];
+var y_temp_i = y_dot[i];
+
+var x_temp_j = x_dot[j];
+var y_temp_j = y_dot[j];
+
+x_dot[i] = (x_temp_j*Math.cos(collision_angle)+y_temp_j*Math.sin(collision_angle))*Math.cos(collision_angle)-(y_temp_i*Math.cos(collision_angle)-x_temp_i*Math.sin(collision_angle))*Math.sin(collision_angle);
+y_dot[i] = (x_temp_j*Math.cos(collision_angle)+y_temp_j*Math.sin(collision_angle))*Math.sin(collision_angle)+(y_temp_i*Math.cos(collision_angle)-x_temp_i*Math.sin(collision_angle))*Math.cos(collision_angle);
+
+x_dot[j] = (x_temp_i*Math.cos(collision_angle)+y_temp_i*Math.sin(collision_angle))*Math.cos(collision_angle)-(y_temp_j*Math.cos(collision_angle)-x_temp_j*Math.sin(collision_angle))*Math.sin(collision_angle);
+y_dot[j] = (x_temp_i*Math.cos(collision_angle)+y_temp_i*Math.sin(collision_angle))*Math.sin(collision_angle)+(y_temp_j*Math.cos(collision_angle)-x_temp_j*Math.sin(collision_angle))*Math.cos(collision_angle);
+
+
+} else {
+
+collision[i][j] = 0;
+
+}
+
+}
+
+
+x[i] = x[i] + dt*x_dot[i];
+y[i] = y[i] + dt*y_dot[i];
+
+
+var colours = ["#FF0000","#00FF00","#0000FF","#0000F0","#00000F","#F000FF","#FFFFFF","#0F00FF","#00FFFF","#F000F0"];
+
+ctx.beginPath();
+ctx.arc(width/2+x[i],height/2+y[i],ball_size,0,2*Math.PI);
+ctx.fillStyle = colours[i];
+ctx.strokeStyle = "#000000";
+ctx.lineWidth = 1;
+ctx.fill();
+ctx.stroke();
+
+/*
+x_history[i].push(x[i]);
+y_history[i].push(y[i]);
+
+ctx.beginPath();
+for(let k=1; k<x_history[i].length; k++){
+ctx.moveTo(width/2+x_history[i][k-1],height/2+y_history[i][k-1]);
+ctx.lineTo(width/2+x_history[i][k],height/2+y_history[i][k]);
+ctx.strokeStyle = colours[i];
+ctx.lineWidth = 2;
+}
+ctx.stroke();
+
+t = t + dt;
+
+if(t>5000){
+
+x_history[i].shift();
+y_history[i].shift();
+
+
+}
+*/
+
+if(y[i]>height/2){
+
+y_dot[i] = -y_dot[i];
+y[i] = height/2;
+
+}
+
+if(y[i]<-height/2){
+
+y_dot[i] = -y_dot[i];
+y[i] = -height/2;
+
+}
+
+if(x[i]>width/2){
+
+x_dot[i] = -x_dot[i];
+x[i] = width/2;
+
+}
+
+if(x[i]<-width/2){
+
+x_dot[i] = -x_dot[i];
+x[i] = -width/2;
+
+}
+
+E = E + Math.sqrt(Math.pow(x_dot[i],2)+Math.pow(y_dot[i],2));
+
+}
+
+//document.getElementById("energy").innerHTML = E;
+
+requestAnimationFrame(drawBilliards);
+
+}
+
+drawBilliards();
+
+}
+
+reDraw();
+
+</script>

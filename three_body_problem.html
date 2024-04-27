@@ -1,0 +1,169 @@
+<h>3 Body Problem</h>
+<p>Thank you for playing the 3 body problem, your civilisation lasted</p>
+<p id="out"></p>
+<p>please click below to try a new configuration</p>
+<button onclick="reDraw()">Retry</button>
+<canvas id="3bpcan"></canvas>
+
+<script>
+// canvas width and height
+
+var width = 1200;
+var height = 500;
+
+var c = document.getElementById("3bpcan");
+var ctx = c.getContext("2d");
+
+c.height = height;
+c.width = width;
+
+
+function resetVariables(){
+
+// time increment
+dt = 0.5;
+t = 0;
+
+alpha = 500;
+
+// 3 body variables
+
+// These need to be the coordinates of relative to the centre of mass
+x = new Array(3);
+y = new Array(3);
+z = new Array(3);
+
+// ensure the centre of mass is the centre of the screen
+x[0] = -50;
+y[0] = 0;
+z[0] = 0;
+
+x[1] = 50;
+y[1] = 0;
+z[1] = 0;
+
+x[2] = -(x[0]+x[1]);
+y[2] = -(y[0]+y[1]);
+z[2] = -(z[0]+z[1]);
+
+x_dot = new Array(3).fill(0);
+y_dot = new Array(3).fill(0);
+z_dot = new Array(3).fill(0);
+
+x_dot[0] = 0;
+y_dot[0] = 3 + 0.1*(Math.random()-0.5);
+z_dot[0] = 0;
+
+x_dot[1] = 0.1*(Math.random()-0.5);
+y_dot[1] = -3 + 0.1*(Math.random()-0.5);
+z_dot[1] = 0;
+
+x_dot[2] = -(x_dot[0]+x_dot[1]);
+y_dot[2] = -(y_dot[0]+y_dot[1]);
+z_dot[2] = -(z_dot[0]+z_dot[1]);
+
+x_history = new Array(3);
+y_history = new Array(3);
+z_history = new Array(3);
+
+for(let i=0; i<x_history.length; i++){
+x_history[i] = new Array();
+y_history[i] = new Array();
+z_history[i] = new Array();
+}
+
+
+}
+
+function reDraw(){
+
+resetVariables();
+
+var animation = window.requestAnimationFrame;
+
+function drawThreeBody(){
+
+ctx.clearRect(0,0,width,height);
+
+for(let i=0;i<x.length;i++){
+
+for(let j=0;j<x.length;j++){
+
+if(i!=j){
+
+var denom = Math.pow(Math.sqrt(Math.pow(x[i]-x[j],2)+Math.pow(y[i]-y[j],2)+Math.pow(z[i]-z[j],2)),3);
+
+x_dot[i] = x_dot[i] + dt*(-alpha*(x[i]-x[j])/denom);
+y_dot[i] = y_dot[i] + dt*(-alpha*(y[i]-y[j])/denom);
+z_dot[i] = z_dot[i] + dt*(-alpha*(z[i]-z[j])/denom);
+
+}
+
+}
+
+}
+
+for(let i=0;i<x.length;i++){
+
+x[i] = x[i] + dt*x_dot[i];
+y[i] = y[i] + dt*y_dot[i];
+z[i] = z[i] + dt*z_dot[i];
+
+
+var colours = ["#FF0000","#00FF00","#0000FF"];
+
+ctx.beginPath();
+ctx.arc(width/2+x[i],height/2+y[i],10,0,2*Math.PI);
+ctx.fillStyle = colours[i];
+ctx.strokeStyle = "#000000";
+ctx.lineWidth = 1;
+ctx.fill();
+ctx.stroke();
+
+
+x_history[i].push(x[i]);
+y_history[i].push(y[i]);
+z_history[i].push(z[i]);
+
+
+
+
+ctx.beginPath();
+for(let k=1; k<x_history[i].length; k++){
+ctx.moveTo(width/2+x_history[i][k-1],height/2+y_history[i][k-1]);
+ctx.lineTo(width/2+x_history[i][k],height/2+y_history[i][k]);
+ctx.strokeStyle = colours[i];
+ctx.lineWidth = 2;
+}
+ctx.stroke();
+
+
+t = t + dt;
+document.getElementById("out").innerHTML = t;
+
+if(t>5000){
+
+x_history[i].shift();
+y_history[i].shift();
+
+
+}
+
+if(y[i]>height || y[i]<-height || x[i]>width || x[i]<-width){
+
+resetVariables();
+
+}
+
+}
+
+
+requestAnimationFrame(drawThreeBody);
+
+}
+
+drawThreeBody();
+
+}
+
+</script>

@@ -1,0 +1,99 @@
+<h>Lorenz Attractor</h>
+<p>This is the lorenz attractor</p>
+
+<canvas id="lorenzcan"></canvas>
+
+<script>
+
+// canvas width and height
+
+var width = 1200;
+var height = 500;
+
+// increase the size of the attractor
+
+var canvas_factor_h = 6;
+var canvas_factor_w = 24;
+
+// time increment
+var dt = 0.01;
+var t = 0;
+
+// lorenz variables
+var x_start = 0
+var y_start = 1
+var z_start = 0;
+
+var x = x_start;
+var y = y_start;
+var z = z_start;
+
+var rho = 28;
+var sigma = 10;
+var beta = 8/3;
+
+var x_history = new Array();
+var y_history = new Array();
+var z_history = new Array();
+
+var animation = window.requestAnimationFrame;
+
+function drawLorenz(){
+var c = document.getElementById("lorenzcan");
+var ctx = c.getContext("2d");
+
+c.height = height;
+c.width = width;
+
+ctx.clearRect(0,0,width,height);
+
+x_history.push(x);
+y_history.push(y);
+z_history.push(z);
+
+var x_new = x + sigma*(y-x) * dt;
+var y_new = y + (x*(rho-z) - y) * dt;
+var z_new = z + (x*y - beta*z) * dt;
+
+x = x_new;
+y = y_new;
+z = z_new;
+
+ctx.beginPath();
+ctx.arc(width/2+canvas_factor_w*x,height/4+canvas_factor_h*z,2,0,2*Math.PI);
+ctx.stroke();
+
+ctx.beginPath();
+for(let k=1; k<x_history.length; k++){
+ctx.moveTo(width/2+canvas_factor_w*x_history[k-1],height/4+canvas_factor_h*z_history[k-1]);
+ctx.lineTo(width/2+canvas_factor_w*x_history[k],height/4+canvas_factor_h*z_history[k])
+}
+ctx.stroke();
+
+t = t + dt;
+
+if(t>10){
+
+x_history.shift();
+y_history.shift();
+z_history.shift();
+
+/*
+x = x_start;
+y = y_start;
+z = z_start; 
+
+x_new = x;
+y_new = y;
+z_new = z;
+*/
+}
+
+
+requestAnimationFrame(drawLorenz);
+
+}
+
+drawLorenz();
+
+</script>

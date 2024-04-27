@@ -1,0 +1,240 @@
+<h>Rayleigh Bernard Convection</h>
+<p>This is convection</p>
+<p id="out"></p>
+<canvas id="RBcan"></canvas>
+
+<script>
+// canvas width and height
+
+var width = 160;
+var height = 60;
+
+var c = document.getElementById("RBcan");
+var ctx = c.getContext("2d");
+
+// space increment
+d = 1;
+
+// display ratio
+h = 8;
+
+c.height = h*height;
+c.width = h*width;
+
+function resetVariables(){
+
+// time increment
+dt = 0.1;
+t = 0;
+
+// grid array size
+grid_height = height;
+grid_width = width;
+
+//RB parameters
+R = 5;
+P = 1;
+kappa = Math.pow(P*R,-0.5);
+nu = Math.pow(P/R,0.5);;
+dT = 1;
+T_0 = 0;
+
+T = new Array(grid_width);
+T_new = new Array(grid_width);
+
+psi = new Array(grid_width);
+psi_new = new Array(grid_width);
+
+w = new Array(grid_width);
+w_new = new Array(grid_width);
+
+for(let i=0; i<grid_width; i++){
+
+T[i] = new Array(grid_height);
+T_new[i] = new Array(grid_height);
+
+psi[i] = new Array(grid_height);
+psi_new[i] = new Array(grid_height);
+
+w[i] = new Array(grid_height);
+w_new[i] = new Array(grid_height);
+
+}
+
+//initial conditions
+
+for(let i=0; i<grid_width; i++){
+
+for(let j=0; j<grid_height; j++){
+
+
+T[i][j] = T_0 + ((grid_height-1-j)/(grid_height-1))*dT;
+T_new[i][j] = T_0 + ((grid_height-1-j)/(grid_height-1))*dT;
+
+/*
+T[i][j] = T_0;
+T_new[i][j] = T_0;
+*/
+w[i][j] = 0;
+w_new[i][j] = 0;
+
+psi[i][j] = 0;
+psi_new[i][j] = 0;
+
+}
+
+T[i][0] = T_0 + dT;
+T_new[i][0] = T_0 + dT;
+
+
+T[i][grid_height-1] = T_0;
+T_new[i][grid_height-1] = T_0;
+
+}
+
+//T[Math.round(grid_width/2)][grid_height-1] = T_0 + 2*dT
+T[Math.round(grid_width/2)][Math.round(grid_height/2)] = T_0 + 10*dT
+
+}
+
+function reDraw(){
+
+resetVariables();
+
+var animation = window.requestAnimationFrame;
+
+function drawConvection(){
+
+ctx.clearRect(0,0,width,height);
+
+// successive over relaxation to find streamfunction
+
+a = 1;
+num_iter = 50;
+
+for(let i=0;i<grid_width;i++){
+
+for(let j=0;j<grid_height;j++){
+
+psi[i][j] = 0;
+psi_new[i][j] = 0;
+
+}
+
+}
+
+for(let k=0;k<num_iter;k++){
+
+for(let i=0;i<grid_width;i++){
+
+for(let j=1;j<grid_height-1;j++){
+
+if(i==0){
+
+down = grid_width-1;
+up = i+1;
+
+} else if (i == grid_width - 1) {
+
+down = i-1;
+up = 0;
+
+} else {
+
+down = i-1;
+up = i+1;
+
+}
+
+//var f = w[i][j];
+var f = (w[up][j] + w[down][j] + w[i][j+1] + w[i][j-1])/4
+psi_new[i][j] = (1-a)*psi[i][j] + (a/4)*(psi[up][j] + psi_new[down][j] + psi[i][j+1] + psi_new[i][j-1] + d*d*f);
+
+}
+
+}
+
+for(let i=0;i<grid_width;i++){
+
+for(let j=0;j<grid_height;j++){
+
+psi[i][j] = psi_new[i][j];
+
+}
+
+}
+
+}
+
+
+
+for(let i=0;i<grid_width;i++){
+
+for(let j=1;j<grid_height-1;j++){
+
+if(i==0){
+
+down = grid_width-1;
+up = i+1;
+
+} else if (i == grid_width - 1) {
+
+down = i-1;
+up = 0;
+
+} else {
+
+down = i-1;
+up = i+1;
+
+}
+
+
+T_new[i][j] = T[i][j] + (dt/(4*(d*d)+8*kappa*dt))*((psi[up][j+1]-psi[up][j-1])*T[up][j]-(psi[down][j+1]-psi[down][j-1])*T[down][j]-(psi[up][j+1]-psi[down][j+1])*T[i][j+1]+(psi[up][j-1]-psi[down][j-1])*T[i][j-1]+4*kappa*(T[up][j]+T[down][j]+T[i][j+1]+T[i][j-1]-4*T[i][j]));
+w_new[i][j] = w[i][j] + (dt/(4*(d*d)+8*nu*dt))*((psi[up][j+1]-psi[up][j-1])*w[up][j]-(psi[down][j+1]-psi[down][j-1])*w[down][j]-(psi[up][j+1]-psi[down][j+1])*w[i][j+1]+(psi[up][j-1]-psi[down][j-1])*w[i][j-1]-2*d*(T[up][j]-T[down][j])+4*nu*(w[up][j]+w[down][j]+w[i][j+1]+w[i][j-1]-4*w[i][j]));
+
+//T_new[i][j] = T[i][j] + dt*(-(psi[up][j]-psi[up][j])*(T[i][j+1]-T[i][j-1])/(4*h*h)-(psi[i][j+1]-psi[i][j-1])*(T[up][j]-T[down][j])/(4*h*h)+kappa*(T[up][j]+T[down][j]+T[i][j+1]+T[i][j-1]-4*T[i][j])/(h*h));
+//w_new[i][j] = w[i][j] + dt*(-(psi[up][j]-psi[up][j])*(w[i][j+1]-w[i][j-1])/(4*h*h)-(psi[i][j+1]-psi[i][j-1])*(w[up][j]-w[down][j])/(4*h*h)-(T[up][j]-T[down][j])/(2*d)+nu*(w[up][j]+w[down][j]+w[i][j+1]+w[i][j-1]-4*w[i][j])/(h*h));
+
+
+}
+
+}
+
+
+for(let i=0;i<grid_width;i++){
+
+for(let j=0;j<grid_height;j++){
+
+T[i][j] = T_new[i][j];
+
+w[i][j] = w_new[i][j];
+
+var grd = ctx.createLinearGradient(h*(i-(T[i][j]-T_0)*grid_width/dT),h*j,h*(i+grid_width-(T[i][j]-T_0)*grid_width/dT),h*j);
+//var grd = ctx.createLinearGradient(h*(i-p[i][j]*grid_width),h*j,h*(i+grid_width-p[i][j]*grid_width),h*j);
+grd.addColorStop(1,"red");
+grd.addColorStop(0,"blue");
+
+// Fill with gradient
+ctx.beginPath();
+ctx.fillStyle = grd;
+ctx.fillRect(h*i,h*(grid_height-1-j),h,h);
+ctx.stroke();
+
+}
+
+}
+
+//document.getElementById("out").innerHTML = p[50][50];
+
+requestAnimationFrame(drawConvection);
+
+}
+
+drawConvection();
+
+}
+
+reDraw();
+
+</script>
